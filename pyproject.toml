@@ -1,0 +1,62 @@
+[project]
+name = "fastapi-starter"
+version = "0.1.0"
+description = "A comprehensive FastAPI scaffolder with best practices and modern features"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "email-validator>=2.2.0",
+    "fastapi>=0.116.1",
+    "loguru>=0.7.3",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "sqlmodel>=0.0.24",
+    "uvicorn[standard]>=0.35.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.6",
+    "psutil>=5.9.0",
+    "asyncpg>=0.29.0",
+    "aiosqlite>=0.19.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=1.17.0",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=0.24.0",
+    "python-dotenv>=1.1.1",
+    "ruff>=0.12.4",
+    "black>=24.0.0",
+    "pre-commit>=3.6.0",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90", "I", "N", "UP", "B", "A", "C4"]
+ignore = ["E501", "B008"]  # B008: Do not perform function calls in argument defaults (allowed for FastAPI Depends)
+
+[tool.ruff.lint.per-file-ignores]
+"dev.py" = ["T201"]  # Allow print statements in development script
+"app/core/config.py" = ["N805"]  # Allow cls in Pydantic validators
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
+
+[tool.mypy]
+strict = true
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
