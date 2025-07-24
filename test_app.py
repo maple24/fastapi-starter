@@ -7,7 +7,7 @@ try:
     print("✅ FastAPI app created successfully!")
     print(f"📄 App title: {app.title}")
     print(f"📋 App description: {app.description}")
-except Exception as e:
+except Exception:
     import traceback
     print("❌ Error creating FastAPI app:")
     traceback.print_exc()

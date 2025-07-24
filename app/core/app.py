@@ -38,17 +38,17 @@ def create_app() -> FastAPI:
         version=settings.VERSION,
         openapi_url=(
             f"{settings.API_V1_STR}/openapi.json"
-            if settings.ENVIRONMENT != "production"
+            if settings.ENABLE_DOCS
             else None
         ),
         docs_url=(
             f"{settings.API_V1_STR}/docs"
-            if settings.ENVIRONMENT != "production"
+            if settings.ENABLE_DOCS
             else None
         ),
         redoc_url=(
             f"{settings.API_V1_STR}/redoc"
-            if settings.ENVIRONMENT != "production"
+            if settings.ENABLE_DOCS
             else None
         ),
         lifespan=lifespan,

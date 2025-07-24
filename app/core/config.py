@@ -5,7 +5,7 @@ Supports environment variables, .env files, and multiple environments
 
 from functools import lru_cache
 
-from pydantic import Field, field_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -43,11 +43,17 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     ALGORITHM: str = "HS256"
 
-    # CORS
-    BACKEND_CORS_ORIGINS: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8080"]
+    # CORS - stored as strings, converted to lists via computed properties
+    BACKEND_CORS_ORIGINS_STR: str = Field(
+        default="http://localhost:3000,http://localhost:8080",
+        alias="BACKEND_CORS_ORIGINS",
+        description="Comma-separated list of CORS origins"
     )
-    ALLOWED_HOSTS: list[str] = Field(default=["localhost", "127.0.0.1"])
+    ALLOWED_HOSTS_STR: str = Field(
+        default="localhost,127.0.0.1",
+        alias="ALLOWED_HOSTS",
+        description="Comma-separated list of allowed hosts"
+    )
 
     # Database
     DATABASE_URL: str | None = Field(
@@ -76,19 +82,19 @@ class Settings(BaseSettings):
     ENABLE_METRICS: bool = True
     ENABLE_DOCS: bool = True
 
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    @classmethod
-    def assemble_cors_origins(cls, v):
-        if isinstance(v, str):
-            return [i.strip() for i in v.split(",")]
-        return v
+    @property
+    def BACKEND_CORS_ORIGINS(self) -> list[str]:
+        """Get CORS origins as a list"""
+        if self.BACKEND_CORS_ORIGINS_STR:
+            return [i.strip() for i in self.BACKEND_CORS_ORIGINS_STR.split(",") if i.strip()]
+        return []
 
-    @field_validator("ALLOWED_HOSTS", mode="before")
-    @classmethod
-    def assemble_allowed_hosts(cls, v):
-        if isinstance(v, str):
-            return [i.strip() for i in v.split(",")]
-        return v
+    @property
+    def ALLOWED_HOSTS(self) -> list[str]:
+        """Get allowed hosts as a list"""
+        if self.ALLOWED_HOSTS_STR:
+            return [i.strip() for i in self.ALLOWED_HOSTS_STR.split(",") if i.strip()]
+        return []
 
 
 @lru_cache

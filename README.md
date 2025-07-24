@@ -174,9 +174,91 @@ pre-commit run --all-files
 
 ## 🐳 Docker Support
 
-```dockerfile
-# Coming soon - Docker configuration
+### Quick Start with Docker
+
+1. **Build and run with docker-compose**:
+   ```bash
+   # Development environment with live reload
+   docker-compose -f docker-compose.dev.yml up --build
+
+   # Production environment
+   docker-compose up --build
+   ```
+
+2. **Or build and run manually**:
+   ```bash
+   # Build the image
+   docker build -t fastapi-starter .
+
+   # Run the container
+   docker run -p 8000:8000 fastapi-starter
+   ```
+
+### Docker Configuration Files
+
+- `Dockerfile` - Multi-stage production-ready image
+- `docker-compose.yml` - Production setup with PostgreSQL, Redis, and Nginx
+- `docker-compose.dev.yml` - Development setup with live reload
+- `.dockerignore` - Files to exclude from Docker build context
+- `nginx.conf` - Nginx reverse proxy configuration
+
+### Environment-Specific Docker Commands
+
+```bash
+# Development with live reload
+docker-compose -f docker-compose.dev.yml up --build
+
+# Production with all services (app, db, redis, nginx)
+docker-compose up --build
+
+# Production without nginx (if you have external reverse proxy)
+docker-compose up --build app db redis
+
+# Run only the database for local development
+docker-compose up db
+
+# View logs
+docker-compose logs -f app
 ```
+
+### Docker Development Helper
+
+Use the `docker-dev.py` script for easier Docker operations:
+
+```bash
+# Start development environment
+python docker-dev.py dev --build --logs
+
+# Start production environment
+python docker-dev.py prod --build
+
+# Database operations
+python docker-dev.py db start
+python docker-dev.py db shell
+python docker-dev.py db reset
+
+# View logs
+python docker-dev.py logs app --follow
+
+# Open shell in container
+python docker-dev.py shell app
+
+# Stop all services
+python docker-dev.py stop
+
+# Clean up
+python docker-dev.py clean --all
+```
+
+### Docker Environment Variables
+
+The Docker setup uses the following key environment variables:
+
+- `ENVIRONMENT` - Set to `development` or `production`
+- `DATABASE_URL` - PostgreSQL connection string
+- `SECRET_KEY` - JWT secret key (change in production!)
+- `BACKEND_CORS_ORIGINS` - Allowed CORS origins
+- `ALLOWED_HOSTS` - Allowed host headers
 
 ## 🚀 Deployment
 
