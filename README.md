@@ -92,11 +92,14 @@ fastapi-starter/
 
 4. **Run the application**:
    ```bash
-   # Development mode
-   python main.py
+   # Development mode (recommended with UV)
+   uv run python main.py
 
    # Or using uvicorn directly
-   uvicorn main:app --reload
+   uv run uvicorn main:app --reload
+
+   # Without UV
+   python main.py
    ```
 
 5. **Visit the API documentation**:
