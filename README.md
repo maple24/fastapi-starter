@@ -5,7 +5,8 @@ A comprehensive FastAPI scaffolder with best practices, modern features, and pro
 ## 🚀 Features
 
 - **Modern FastAPI Setup**: Latest FastAPI with async/await support
-- **Authentication & Authorization**: JWT-based auth with refresh tokens
+- **Authentication & Authorization**: JWT-based auth with refresh tokens and LDAP support
+- **LDAP Integration**: Optional LDAP/Active Directory authentication with fallback to local auth
 - **Database Integration**: SQLModel with async PostgreSQL/SQLite support
 - **API Documentation**: Auto-generated OpenAPI docs with Swagger UI
 - **Security**: CORS, trusted hosts, rate limiting, and security headers
@@ -51,11 +52,12 @@ fastapi-starter/
 │   └── utils/
 │       ├── __init__.py
 │       ├── security.py       # Security utilities
-│       └── database.py       # Database utilities
+│       ├── database.py       # Database utilities
+│       └── ldap.py           # LDAP authentication utilities
 ├── tests/                    # Test directory
 ├── main.py                   # Application entry point
 ├── pyproject.toml           # Project configuration
-├── .env.template            # Environment variables template
+├── .env.example             # Environment variables template
 └── README.md
 ```
 
@@ -86,8 +88,17 @@ fastapi-starter/
 
 3. **Set up environment variables**:
    ```bash
-   cp .env.template .env
+   cp .env.example .env
    # Edit .env with your configuration
+   ```
+
+   **For LDAP authentication**, enable and configure LDAP settings in `.env`:
+   ```bash
+   LDAP_ENABLED=true
+   LDAP_SERVER=ldap://your-ldap-server.com
+   LDAP_BASE_DN=ou=users,dc=example,dc=com
+   LDAP_USER_FILTER=(uid={username})
+   # See .env.example for full LDAP configuration options
    ```
 
 4. **Run the application**:
@@ -157,7 +168,7 @@ pre-commit run --all-files
 
 ### Authentication
 - `POST /api/v1/auth/register` - User registration
-- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/login` - User login (supports LDAP if enabled)
 - `POST /api/v1/auth/refresh` - Refresh access token
 - `GET /api/v1/auth/me` - Get current user info
 
@@ -174,6 +185,90 @@ pre-commit run --all-files
 - `GET /api/v1/items/{item_id}` - Get item by ID
 - `PUT /api/v1/items/{item_id}` - Update item
 - `DELETE /api/v1/items/{item_id}` - Delete item
+
+## 🔐 LDAP Authentication
+
+This starter supports LDAP/Active Directory authentication with automatic fallback to local authentication.
+
+### Features
+
+- **Flexible Authentication**: Try LDAP first, fall back to local database authentication
+- **Multiple LDAP Servers**: Support for OpenLDAP, Active Directory, FreeIPA, and others
+- **Secure Connection**: Optional SSL/TLS support
+- **Customizable Mapping**: Configure LDAP attribute mapping for email and full name
+- **Search Filters**: Flexible user search with customizable LDAP filters
+
+### Configuration
+
+All LDAP settings are configured via environment variables. See `.env.example` for detailed configuration options:
+
+```bash
+# Enable LDAP authentication
+LDAP_ENABLED=true
+
+# LDAP Server
+LDAP_SERVER=ldap://ldap.example.com
+LDAP_PORT=389
+LDAP_USE_SSL=false
+
+# Service account for user search
+LDAP_BIND_DN=cn=admin,dc=example,dc=com
+LDAP_BIND_PASSWORD=admin-password
+
+# Search configuration
+LDAP_BASE_DN=ou=users,dc=example,dc=com
+LDAP_USER_FILTER=(uid={username})
+
+# Attribute mapping
+LDAP_ATTR_EMAIL=mail
+LDAP_ATTR_FULLNAME=cn
+```
+
+### Common LDAP Filter Examples
+
+```bash
+# OpenLDAP (uid-based)
+LDAP_USER_FILTER=(uid={username})
+
+# Active Directory (sAMAccountName)
+LDAP_USER_FILTER=(sAMAccountName={username})
+
+# Email-based login
+LDAP_USER_FILTER=(mail={username})
+
+# Common name (cn)
+LDAP_USER_FILTER=(cn={username})
+```
+
+### LDAP + Local Authentication Flow
+
+1. User submits login credentials
+2. If LDAP is enabled, attempt LDAP authentication first
+3. If LDAP authentication succeeds, create JWT token
+4. If LDAP fails or is disabled, try local database authentication
+5. Return JWT token on successful authentication
+
+### Testing LDAP Connection
+
+You can test your LDAP configuration programmatically:
+
+```python
+from app.core.config import get_settings
+from app.utils.ldap import test_ldap_connection
+
+settings = get_settings()
+if test_ldap_connection(settings):
+    print("✅ LDAP connection successful")
+else:
+    print("❌ LDAP connection failed")
+```
+
+### LDAP Examples
+
+The `.env.example` file includes complete configuration examples for:
+- **OpenLDAP** with anonymous bind
+- **Active Directory** with SSL
+- **FreeIPA/Red Hat Directory Server**
 
 ## 🐳 Docker Support
 
@@ -276,6 +371,16 @@ DATABASE_URL=postgresql://user:pass@host:5432/db
 BACKEND_CORS_ORIGINS=https://yourdomain.com
 ALLOWED_HOSTS=yourdomain.com
 ENABLE_DOCS=false  # Disable docs in production
+
+# LDAP Configuration (if using LDAP authentication)
+LDAP_ENABLED=true
+LDAP_SERVER=ldaps://ldap.yourdomain.com
+LDAP_PORT=636
+LDAP_USE_SSL=true
+LDAP_BIND_DN=cn=service_account,ou=service,dc=yourdomain,dc=com
+LDAP_BIND_PASSWORD=your-ldap-bind-password
+LDAP_BASE_DN=ou=users,dc=yourdomain,dc=com
+LDAP_USER_FILTER=(uid={username})
 ```
 
 ### Database Migration

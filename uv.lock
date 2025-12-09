@@ -345,6 +345,7 @@ dependencies = [
     { name = "asyncpg" },
     { name = "email-validator" },
     { name = "fastapi" },
+    { name = "ldap3" },
     { name = "loguru" },
     { name = "passlib", extra = ["bcrypt"] },
     { name = "psutil" },
@@ -375,6 +376,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.29.0" },
     { name = "email-validator", specifier = ">=2.2.0" },
     { name = "fastapi", specifier = ">=0.116.1" },
+    { name = "ldap3", specifier = ">=2.9.1" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "psutil", specifier = ">=5.9.0" },
@@ -509,6 +511,18 @@ source = { registry = "https://rb-artifactory.bosch.com/artifactory/api/pypi/pyt
 sdist = { url = "https://rb-artifactory.bosch.com/artifactory/api/pypi/python-virtual/packages/packages/f2/97/ebf4da567aa6827c909642694d71c9fcf53e5b504f2d96afea02718862f3/iniconfig-2.1.0.tar.gz", hash = "sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7" }
 wheels = [
     { url = "https://rb-artifactory.bosch.com/artifactory/api/pypi/python-virtual/packages/packages/2c/e1/e6716421ea10d38022b952c159d5161ca1193197fb744506875fbb87ea7b/iniconfig-2.1.0-py3-none-any.whl", hash = "sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760" },
+]
+
+[[package]]
+name = "ldap3"
+version = "2.9.1"
+source = { registry = "https://rb-artifactory.bosch.com/artifactory/api/pypi/python-virtual/simple" }
+dependencies = [
+    { name = "pyasn1" },
+]
+sdist = { url = "https://rb-artifactory.bosch.com/artifactory/api/pypi/python-virtual/packages/packages/43/ac/96bd5464e3edbc61595d0d69989f5d9969ae411866427b2500a8e5b812c0/ldap3-2.9.1.tar.gz", hash = "sha256:f3e7fc4718e3f09dda568b57100095e0ce58633bcabbed8667ce3f8fbaa4229f" }
+wheels = [
+    { url = "https://rb-artifactory.bosch.com/artifactory/api/pypi/python-virtual/packages/packages/4e/f6/71d6ec9f18da0b2201287ce9db6afb1a1f637dedb3f0703409558981c723/ldap3-2.9.1-py2.py3-none-any.whl", hash = "sha256:5869596fc4948797020d3f03b7939da938778a0f9e2009f7a072ccf92b8e8d70" },
 ]
 
 [[package]]
