@@ -5,23 +5,23 @@ Handles user authentication, registration, and token management
 
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.config import get_settings
 from app.models.user import UserModel
 from app.schemas.auth import Token, UserCreate, UserResponse
 from app.schemas.user import User
+from app.utils.ldap import (
+    LDAPAuthenticationError,
+    LDAPConnectionError,
+    authenticate_ldap_user,
+)
 from app.utils.security import (
     create_access_token,
     create_refresh_token,
     get_current_user,
     get_password_hash,
-)
-from app.utils.ldap import (
-    authenticate_ldap_user,
-    LDAPAuthenticationError,
-    LDAPConnectionError,
 )
 
 router = APIRouter()
@@ -74,23 +74,23 @@ async def login(
     Supports both LDAP authentication (if enabled) and local authentication
     """
     user_email = form_data.username
-    
+
     # Try LDAP authentication if enabled
     if settings.LDAP_ENABLED:
         try:
             ldap_user = authenticate_ldap_user(
-                form_data.username, 
-                form_data.password, 
+                form_data.username,
+                form_data.password,
                 settings
             )
-            
+
             if ldap_user:
                 # LDAP authentication successful
                 user_email = ldap_user["email"]
-                
+
                 # Optionally, create or update user in local database here
                 # user = await get_or_create_user_from_ldap(ldap_user)
-                
+
                 # Create tokens
                 access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
                 access_token = create_access_token(
@@ -103,19 +103,19 @@ async def login(
                 )
 
                 return Token(
-                    access_token=access_token, 
-                    refresh_token=refresh_token, 
+                    access_token=access_token,
+                    refresh_token=refresh_token,
                     token_type="bearer"
                 )
-        except LDAPConnectionError as e:
+        except LDAPConnectionError:
             # Log LDAP connection error and fall back to local auth
             # logger.warning(f"LDAP connection error: {str(e)}")
             pass
-        except LDAPAuthenticationError as e:
+        except LDAPAuthenticationError:
             # LDAP authentication failed, try local auth
             # logger.info(f"LDAP authentication failed: {str(e)}")
             pass
-    
+
     # Fall back to local authentication
     # Authenticate user (placeholder - implement with your database)
     # user = await authenticate_user(form_data.username, form_data.password)
@@ -176,5 +176,5 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
         email=current_user.email,
         full_name=current_user.full_name,
         is_active=current_user.is_active,
-        created_at=current_user.created_at,
+        created_at=current_user.created_at.isoformat() if current_user.created_at else "",
     )

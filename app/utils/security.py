@@ -76,7 +76,11 @@ def verify_token(token: str, token_type: str = "access") -> TokenData | None:
 
         email = payload.get("sub")
         token_type_claim = payload.get("type")
-        if not isinstance(email, str) or email is None or token_type_claim != token_type:
+        if (
+            not isinstance(email, str)
+            or email is None
+            or token_type_claim != token_type
+        ):
             return None
         return TokenData(email=email)
     except JWTError:
@@ -102,7 +106,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
 
     # For now, return a mock user
     # Use a valid email for testing if token_data.email is invalid
-    valid_email = token_data.email if "@" in str(token_data.email) else "test@example.com"
+    valid_email = (
+        token_data.email if "@" in str(token_data.email) else "test@example.com"
+    )
     return User(
         id=1,
         email=valid_email,

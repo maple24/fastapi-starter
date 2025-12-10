@@ -61,10 +61,18 @@ def handle_db_command(args):
         run_command(["docker-compose", "down", "-v"])
         run_command(["docker-compose", "up", "-d", "db"])
     elif args.action == "shell":
-        run_command([
-            "docker-compose", "exec", "db",
-            "psql", "-U", "fastapi_user", "-d", "fastapi_db"
-        ])
+        run_command(
+            [
+                "docker-compose",
+                "exec",
+                "db",
+                "psql",
+                "-U",
+                "fastapi_user",
+                "-d",
+                "fastapi_db",
+            ]
+        )
 
 
 def handle_logs_command(args):
@@ -103,25 +111,39 @@ def create_parser():
 
     # Build command
     build_parser = subparsers.add_parser("build", help="Build Docker image")
-    build_parser.add_argument("--no-cache", action="store_true", help="Build without cache")
+    build_parser.add_argument(
+        "--no-cache", action="store_true", help="Build without cache"
+    )
 
     # Development command
     dev_parser = subparsers.add_parser("dev", help="Start development environment")
-    dev_parser.add_argument("--build", action="store_true", help="Build images before starting")
-    dev_parser.add_argument("--logs", action="store_true", help="Follow logs after starting")
+    dev_parser.add_argument(
+        "--build", action="store_true", help="Build images before starting"
+    )
+    dev_parser.add_argument(
+        "--logs", action="store_true", help="Follow logs after starting"
+    )
 
     # Production command
     prod_parser = subparsers.add_parser("prod", help="Start production environment")
-    prod_parser.add_argument("--build", action="store_true", help="Build images before starting")
-    prod_parser.add_argument("--nginx", action="store_true", help="Include Nginx service")
+    prod_parser.add_argument(
+        "--build", action="store_true", help="Build images before starting"
+    )
+    prod_parser.add_argument(
+        "--nginx", action="store_true", help="Include Nginx service"
+    )
 
     # Database command
     db_parser = subparsers.add_parser("db", help="Database operations")
-    db_parser.add_argument("action", choices=["start", "stop", "reset", "shell"], help="Database action")
+    db_parser.add_argument(
+        "action", choices=["start", "stop", "reset", "shell"], help="Database action"
+    )
 
     # Logs command
     logs_parser = subparsers.add_parser("logs", help="View service logs")
-    logs_parser.add_argument("service", nargs="?", default="app", help="Service name (default: app)")
+    logs_parser.add_argument(
+        "service", nargs="?", default="app", help="Service name (default: app)"
+    )
     logs_parser.add_argument("-f", "--follow", action="store_true", help="Follow logs")
 
     # Shell command
@@ -134,7 +156,9 @@ def create_parser():
 
     # Clean command
     clean_parser = subparsers.add_parser("clean", help="Clean up Docker resources")
-    clean_parser.add_argument("--all", action="store_true", help="Remove all Docker resources")
+    clean_parser.add_argument(
+        "--all", action="store_true", help="Remove all Docker resources"
+    )
 
     return parser
 

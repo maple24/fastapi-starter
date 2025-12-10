@@ -131,6 +131,10 @@ def authenticate_ldap_user(
     """
     Authenticate user against LDAP server and retrieve user information
 
+    Supports two authentication modes:
+    1. Direct UPN authentication (for Active Directory) - if LDAP_DOMAIN is set
+    2. Search and bind (traditional LDAP) - if LDAP_BASE_DN is set
+
     Args:
         username: Username to authenticate
         password: User password
@@ -151,31 +155,19 @@ def authenticate_ldap_user(
         return None
 
     try:
-        # Create LDAP server
         server = create_ldap_server(settings)
 
-        # Search for user
-        search_result = _search_ldap_user(server, settings, username)
-        if not search_result:
-            return None
+        # Mode 1: Direct UPN authentication (Active Directory style)
+        if settings.LDAP_DOMAIN:
+            return _authenticate_upn(server, settings, username, password)
 
-        user_dn, user_info = search_result
+        # Mode 2: Traditional search and bind
+        if settings.LDAP_BASE_DN:
+            return _authenticate_search_bind(server, settings, username, password)
 
-        # Now authenticate with user's credentials
-        user_conn = Connection(
-            server,
-            user=user_dn,
-            password=password,
-            raise_exceptions=False,
+        raise LDAPAuthenticationError(
+            "LDAP configuration incomplete: set either LDAP_DOMAIN or LDAP_BASE_DN"
         )
-
-        if not user_conn.bind():
-            return None
-
-        user_conn.unbind()
-
-        # Return user information
-        return user_info
 
     except LDAPBindError as e:
         raise LDAPAuthenticationError(f"LDAP bind failed: {str(e)}") from e
@@ -183,6 +175,112 @@ def authenticate_ldap_user(
         raise LDAPConnectionError(f"LDAP error: {str(e)}") from e
     except Exception as e:
         raise LDAPAuthenticationError(f"Authentication error: {str(e)}") from e
+
+
+def _authenticate_upn(
+    server: Server,
+    settings: Settings,
+    username: str,
+    password: str,
+) -> dict[str, str] | None:
+    """
+    Authenticate using UPN format (username@domain) - Active Directory style
+
+    Returns:
+        User information dict or None if authentication fails
+    """
+    # Build UPN: username@domain
+    upn = f"{username}@{settings.LDAP_DOMAIN}"
+
+    # Authenticate directly
+    conn = Connection(
+        server,
+        user=upn,
+        password=password,
+        raise_exceptions=False,
+    )
+
+    if not conn.bind():
+        return None
+
+    # Successfully authenticated, now search for user details
+    user_info = None
+    if settings.LDAP_BASE_DN:
+        search_filter = settings.LDAP_USER_FILTER.format(username=username)
+        conn.search(
+            search_base=settings.LDAP_BASE_DN,
+            search_filter=search_filter,
+            search_scope=SUBTREE,
+            attributes=[settings.LDAP_ATTR_EMAIL, settings.LDAP_ATTR_FULLNAME],
+        )
+
+        if conn.entries:
+            entry = conn.entries[0]
+            email = None
+            full_name = None
+
+            if hasattr(entry, settings.LDAP_ATTR_EMAIL):
+                email_attr = getattr(entry, settings.LDAP_ATTR_EMAIL)
+                if email_attr:
+                    email = str(email_attr.value)
+
+            if hasattr(entry, settings.LDAP_ATTR_FULLNAME):
+                fullname_attr = getattr(entry, settings.LDAP_ATTR_FULLNAME)
+                if fullname_attr:
+                    full_name = str(fullname_attr.value)
+
+            user_info = {
+                "email": email or f"{username}@{settings.LDAP_DOMAIN}",
+                "full_name": full_name or username,
+                "username": username,
+            }
+
+    conn.unbind()
+
+    # If search failed or BASE_DN not set, return basic info
+    if not user_info:
+        user_info = {
+            "email": f"{username}@{settings.LDAP_DOMAIN}",
+            "full_name": username,
+            "username": username,
+        }
+
+    return user_info
+
+
+def _authenticate_search_bind(
+    server: Server,
+    settings: Settings,
+    username: str,
+    password: str,
+) -> dict[str, str] | None:
+    """
+    Traditional LDAP authentication: search for user DN, then bind with it
+
+    Returns:
+        User information dict or None if authentication fails
+    """
+    # Search for user
+    search_result = _search_ldap_user(server, settings, username)
+    if not search_result:
+        return None
+
+    user_dn, user_info = search_result
+
+    # Authenticate with user's credentials
+    user_conn = Connection(
+        server,
+        user=user_dn,
+        password=password,
+        raise_exceptions=False,
+    )
+
+    if not user_conn.bind():
+        return None
+
+    user_conn.unbind()
+
+    return user_info
 
 
 def test_ldap_connection(settings: Settings) -> bool:
